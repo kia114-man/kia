@@ -9,7 +9,13 @@ def model_of(sheet):
 def clean(s):
     return re.sub(r"\s+", " ", str(s or "")).strip()
 
+def nice(name):
+    name = re.sub(r"T/GDI (\d\.\d)", r"가솔린 \1터보", name)
+    name = re.sub(r"\bGSL (\d\.\d)", r"가솔린 \1", name)
+    return name
+
 def strip_prefix(name, model):
+    name = nice(name)
     for p in (model, "봉고" + model, "봉고1톤", "봉고1.2톤"):
         if name.startswith(p + " "):
             return name[len(p) + 1:]
