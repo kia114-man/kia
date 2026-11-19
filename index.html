@@ -87,6 +87,20 @@ button,input,select{font:inherit;color:inherit}
 .notice .ni .tt .dt{margin-left:auto;font-size:11.5px;font-weight:500;color:#9a8a76;flex:none}
 .notice .ni .bd{font-size:13px;color:#4a5866;line-height:1.55;margin-top:3px;white-space:pre-line}
 .notice.fold .ni.old{display:none}
+.npop{position:fixed;inset:0;background:rgba(5,20,31,.6);display:none;z-index:60;align-items:center;justify-content:center;padding:20px}
+.npop.show{display:flex}
+.npbox{background:#fff;width:100%;max-width:420px;max-height:80vh;border-radius:16px;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,.3)}
+.nphd{background:#05141f;color:#fff;padding:14px 16px;font-size:16px;font-weight:800}
+.npbd{overflow-y:auto;padding:4px 16px 8px}
+.npit{padding:12px 0;border-bottom:1px dashed var(--line)}
+.npit:last-child{border-bottom:0}
+.npit .tt{display:flex;gap:6px;align-items:baseline;font-size:15px;font-weight:800}
+.npit .tt .pin{font-size:11px;font-weight:800;color:#fff;background:#e5484d;border-radius:5px;padding:1px 5px;flex:none}
+.npit .tt .dt{margin-left:auto;font-size:12px;font-weight:500;color:var(--ink3);flex:none}
+.npit .bd{font-size:14px;color:#33414f;line-height:1.6;margin-top:5px;white-space:pre-line}
+.npft{display:flex;border-top:1px solid var(--line)}
+.npft button{flex:1;border:0;background:#fff;padding:14px;font-size:14px;font-weight:700;cursor:pointer;color:var(--ink2)}
+.npft button+button{border-left:1px solid var(--line);color:#05141f}
 .sum{font-size:13px;color:var(--ink2);padding:12px 2px 8px;display:flex;justify-content:space-between;align-items:center}
 .sum b{color:var(--ink);font-size:15px}
 .list{display:grid;gap:10px;padding-bottom:30px}
@@ -195,6 +209,8 @@ button,input,select{font:inherit;color:inherit}
     <div class="nbody" id="nBody"></div>
   </div>
 </div>
+<div class="npop" id="npop"><div class="npbox"><div class="nphd">📢 공지사항</div><div class="npbd" id="npbd"></div>
+<div class="npft"><button id="npToday">오늘 하루 보지 않기</button><button id="npClose">닫기</button></div></div></div>
 <div class="toast" id="toast"></div>
 <button class="totop" id="totop" aria-label="맨 위로">▲</button>
 
@@ -349,6 +365,17 @@ fetch('notice.json',{cache:'no-store'}).then(r=>r.json()).then(list=>{if(!list||
   el.innerHTML=`<div class="nh" id="nhd">📢 공지사항 <small>${more?'전체 '+list.length+'건 보기 ▾':''}</small></div>`+
     list.map((n,i)=>`<div class="ni${i>=2?' old':''}"><div class="tt">${n.pin?'<span class="pin">필독</span>':''}<span>${esc(n.title)}</span><span class="dt">${esc((n.date||'').slice(5).replace('-','/'))}</span></div>${n.body?'<div class="bd">'+esc(n.body)+'</div>':''}</div>`).join('');
   el.hidden=false;
+  const sig=list.map(n=>n.date+n.title+n.body).join('|');let h=0;for(const c of sig)h=(h*31+c.charCodeAt(0))|0;
+  const today=new Date(Date.now()+9*3600e3).toISOString().slice(0,10),key='bm_np';let skip=false;
+  try{const v=JSON.parse(localStorage.getItem(key)||'{}');skip=v.d===today&&v.h===h;}catch(e){}
+  if(!skip){
+    $('npbd').innerHTML=list.slice(0,5).map(n=>`<div class="npit"><div class="tt">${n.pin?'<span class="pin">필독</span>':''}<span>${esc(n.title)}</span><span class="dt">${esc((n.date||'').slice(5).replace('-','/'))}</span></div>${n.body?'<div class="bd">'+esc(n.body)+'</div>':''}</div>`).join('');
+    $('npop').classList.add('show');
+    const close=()=>$('npop').classList.remove('show');
+    $('npClose').onclick=close;
+    $('npToday').onclick=()=>{try{localStorage.setItem(key,JSON.stringify({d:today,h}));}catch(e){}close();};
+    $('npop').addEventListener('click',e=>{if(e.target.id==='npop')close();});
+  }
   if(more)$('nhd').onclick=()=>{el.classList.toggle('fold');$('nhd').querySelector('small').textContent=el.classList.contains('fold')?'전체 '+list.length+'건 보기 ▾':'접기 ▴';};
 }).catch(()=>{});
 let NP=null;
