@@ -99,9 +99,10 @@ button,input,select{font:inherit;color:inherit}
 .cust{display:flex;align-items:center;gap:8px;background:#fff6e0;border:1px solid #f3d38a;border-radius:9px;padding:7px 10px}
 .cust span{font-size:12px;font-weight:700;color:#9a6a00}
 .cust b{font-size:16px;font-weight:800;color:#0b1b2b}
-.opts{display:flex;flex-wrap:wrap;gap:4px}
-.opt{font-size:11.5px;background:#f1f4f8;color:var(--ink2);border-radius:5px;padding:2px 6px}
-.opt.none{color:var(--ink3)}
+.opts{display:flex;flex-wrap:wrap;gap:5px;align-items:center}
+.opts .ol{font-size:12px;font-weight:800;color:#0b3a8c;margin-right:2px}
+.opt{font-size:13px;font-weight:700;background:#e8f1ff;color:#0b3a8c;border:1px solid #c9dcff;border-radius:7px;padding:3px 8px}
+.opt.none{background:#f1f4f8;border-color:#e3e8ee;color:var(--ink3);font-weight:600}
 .colors{display:flex;gap:12px;font-size:12.5px;color:var(--ink2);flex-wrap:wrap}
 .colors span{display:inline-flex;align-items:center;gap:5px}
 .dot{width:13px;height:13px;border-radius:50%;border:1px solid rgba(0,0,0,.18);display:inline-block;flex:none}
@@ -308,7 +309,7 @@ function card(x){
   return `<article class="card">
     <div class="r1"><span class="model">${esc(x.m)}</span><div class="trim">${esc(x.t)}</div>${qty}</div>
     ${S.tab==='pre'&&x.c?`<div class="cust"><span>계약자</span><b>${esc(x.c)}</b></div>`:''}
-    <div class="opts">${opts}</div>
+    <div class="opts"><span class="ol">옵션</span>${opts}</div>
     <div class="colors"><span><i class="dot" style="background:${colorOf(x.e)}"></i>외장 ${esc(x.e)}</span><span><i class="dot" style="background:${colorOf(x.i)}"></i>내장 ${esc(x.i)}</span></div>
     <div class="r3"><div>${badge?'<div style="margin-bottom:4px">'+badge+'</div>':''}<div class="price">${won(x.p)}<small>만원</small></div>${meta?'<div class="meta">'+meta+'</div>':''}</div>
     <button class="ask" data-i="${x._i}">💬 문의</button></div>
