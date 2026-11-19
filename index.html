@@ -221,8 +221,9 @@ const TRIMS=['플래티넘','마스터즈','시그니처','노블레스','프레
 const TINC=new Set(['플래티넘','마스터즈','X-Line','GT-Line','X-PRO','스마트셀렉션']);
 function trimOf(t){t=t.replace(/베스트 셀렉션/g,'베스트셀렉션');const tk=t.split(/[\s_\-+]+/);for(const n of TRIMS){if(TINC.has(n)?t.includes(n):tk.includes(n))return n;}return '기타';}
 const ekey=s=>(s||'').replace(/\s/g,'');
-function fuel(t){if(/EV 전기차|전기/.test(t))return '전기';if(/HEV|하이브리드/.test(t))return '하이브리드';if(/LPi|LPG/.test(t))return 'LPG';
-  if(/디젤/.test(t))return '디젤';if(/가솔린/.test(t))return '가솔린';return '기타';}
+const EV_MODELS=new Set(['EV3','EV4','EV5','EV6','EV9']);
+function fuel(t,m){if(EV_MODELS.has(m)||/EV 전기차|전기/.test(t))return '전기';if(/HEV|하이브리드/.test(t))return '하이브리드';if(/LPi|LPG/.test(t))return 'LPG';
+  if(/디젤/.test(t))return '디젤';if(/가솔린|GSL|T\/GDI|GDI/.test(t))return '가솔린';return '기타';}
 const won=n=>(n/10000).toLocaleString('ko-KR',{maximumFractionDigits:0});
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
@@ -239,7 +240,7 @@ addEventListener('resize',setTopH);setTopH();
 fetch('data.json',{cache:'no-store'}).then(r=>r.json()).then(d=>{
   DATA=d;
   for(const k of ['now','sale','pre']){
-    d[k].forEach((x,i)=>{x._i=i;x._f=fuel(x.t);x._t=trimOf(x.t);x._s=(x.m+' '+x.t+' '+x.o+' '+x.e+' '+x.i+' '+(x.c||'')+' '+(x.no||'')+' '+(x.st||'')).toLowerCase().replace(/\s+/g,' ');});
+    d[k].forEach((x,i)=>{x._i=i;x._f=fuel(x.t,x.m);x._t=trimOf(x.t);x._s=(x.m+' '+x.t+' '+x.o+' '+x.e+' '+x.i+' '+(x.c||'')+' '+(x.no||'')+' '+(x.st||'')).toLowerCase().replace(/\s+/g,' ');});
     $('c-'+k).textContent=d[k].reduce((a,x)=>a+x.q,0).toLocaleString()+'대';
   }
   $('upd').textContent=d.updated;
