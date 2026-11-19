@@ -53,7 +53,8 @@ button,input,select{font:inherit;color:inherit}
 .totop.show{display:block}
 .chip.on{background:var(--navy);border-color:var(--navy);color:#fff}
 .chip.on em{color:#9fb0c0}
-.filters{display:flex;gap:6px;padding-bottom:10px}
+.filters{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding-bottom:10px}
+@media(min-width:620px){.filters{grid-template-columns:repeat(4,1fr)}}
 .filters select{flex:1;min-width:0;border:1.5px solid var(--line);border-radius:9px;padding:7px 8px;font-size:13px;background:#fff;color:var(--ink2)}
 .nbtn{display:flex;align-items:center;justify-content:space-between;width:100%;margin:10px 0 0;border:1.5px solid #cfe0ff;background:#eef4ff;color:#0b3a8c;border-radius:10px;padding:10px 12px;font-size:14px;font-weight:800;cursor:pointer}
 .nbtn small{font-size:12px;font-weight:600;color:#4a6aa8}
@@ -155,8 +156,9 @@ button,input,select{font:inherit;color:inherit}
     </div>
     <div class="chips" id="models"></div>
     <div class="filters">
-      <select id="fExt"><option value="">외장색상 전체</option></select>
       <select id="fFuel"><option value="">연료 전체</option></select>
+      <select id="fTrim"><option value="">트림 전체</option></select>
+      <select id="fExt"><option value="">외장색상 전체</option></select>
       <select id="fSort">
         <option value="def">기본 순서</option>
         <option value="pa">가격 낮은순</option>
@@ -215,6 +217,9 @@ function colorOf(n){n=(n||'').trim();if(COLOR[n])return COLOR[n];
   if(/화이트|백/.test(n))return '#f4f4f2';if(/블랙/.test(n))return '#1b1b1b';if(/그레이/.test(n))return '#888';
   if(/브라운/.test(n))return '#6b4a35';if(/베이지/.test(n))return '#d6c6a8';if(/블루|청/.test(n))return '#2c4a72';if(/그린/.test(n))return '#4b6a55';if(/레드/.test(n))return '#a3182a';
   return '#c7ccd1';}
+const TRIMS=['플래티넘','마스터즈','시그니처','노블레스','프레스티지','트렌디','X-Line','GT-Line','X-PRO','GT','그래비티','스마트셀렉션','베스트셀렉션','블랙에디션','아웃도어','익스트림','어드벤처','다이내믹','어스','에어','라이트','스탠다드','롱레인지','스마트','럭셔리','GLS','GL','L'];
+const TINC=new Set(['플래티넘','마스터즈','X-Line','GT-Line','X-PRO','스마트셀렉션']);
+function trimOf(t){t=t.replace(/베스트 셀렉션/g,'베스트셀렉션');const tk=t.split(/[\s_\-+]+/);for(const n of TRIMS){if(TINC.has(n)?t.includes(n):tk.includes(n))return n;}return '기타';}
 const ekey=s=>(s||'').replace(/\s/g,'');
 function fuel(t){if(/EV 전기차|전기/.test(t))return '전기';if(/HEV|하이브리드/.test(t))return '하이브리드';if(/LPi|LPG/.test(t))return 'LPG';
   if(/디젤/.test(t))return '디젤';if(/가솔린/.test(t))return '가솔린';return '기타';}
@@ -222,7 +227,7 @@ const won=n=>(n/10000).toLocaleString('ko-KR',{maximumFractionDigits:0});
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
 let DATA=null, view=[], shown=0;
-const S={tab:'now',model:'',q:'',ext:'',fuel:'',sort:'def'};
+const S={tab:'now',model:'',q:'',ext:'',fuel:'',trim:'',sort:'def'};
 try{const s=JSON.parse(localStorage.getItem('bm_stock')||'{}');if(s.tab)S.tab=s.tab;}catch(e){}
 const h=location.hash.slice(1);if(TAB_NAME[h])S.tab=h;
 function save(){try{localStorage.setItem('bm_stock',JSON.stringify({tab:S.tab}));}catch(e){}}
@@ -234,7 +239,7 @@ addEventListener('resize',setTopH);setTopH();
 fetch('data.json',{cache:'no-store'}).then(r=>r.json()).then(d=>{
   DATA=d;
   for(const k of ['now','sale','pre']){
-    d[k].forEach((x,i)=>{x._i=i;x._f=fuel(x.t);x._s=(x.m+' '+x.t+' '+x.o+' '+x.e+' '+x.i+' '+(x.c||'')+' '+(x.no||'')+' '+(x.st||'')).toLowerCase().replace(/\s+/g,' ');});
+    d[k].forEach((x,i)=>{x._i=i;x._f=fuel(x.t);x._t=trimOf(x.t);x._s=(x.m+' '+x.t+' '+x.o+' '+x.e+' '+x.i+' '+(x.c||'')+' '+(x.no||'')+' '+(x.st||'')).toLowerCase().replace(/\s+/g,' ');});
     $('c-'+k).textContent=d[k].reduce((a,x)=>a+x.q,0).toLocaleString()+'대';
   }
   $('upd').textContent=d.updated;
@@ -242,7 +247,7 @@ fetch('data.json',{cache:'no-store'}).then(r=>r.json()).then(d=>{
 }).catch(()=>{$('list').innerHTML='<div class="empty">재고 데이터를 불러오지 못했습니다.<br>잠시 후 새로고침 해주세요.</div>';});
 
 function selectTab(k,keep){
-  S.tab=k; if(!keep){S.model='';S.ext='';S.fuel='';}
+  S.tab=k; if(!keep){S.model='';S.ext='';S.fuel='';S.trim='';}
   document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('on',b.dataset.k===k));
   if(location.hash.slice(1)!==k){try{history.replaceState(null,'','#'+k);}catch(e){location.hash=k;}}
   save(); buildModels(); buildSelects(); apply();
@@ -257,13 +262,14 @@ function buildModels(){
   $('models').innerHTML=`<button class="chip ${S.model?'':'on'}" data-m="">전체<em>${tot}</em></button>`+
     order.map(m=>`<button class="chip ${S.model===m?'on':''}" data-m="${esc(m)}">${esc(m)}<em>${cnt[m]}</em></button>`).join('');
 }
-$('models').addEventListener('click',e=>{const b=e.target.closest('.chip');if(!b)return;S.model=b.dataset.m;S.ext='';
+$('models').addEventListener('click',e=>{const b=e.target.closest('.chip');if(!b)return;S.model=b.dataset.m;S.ext='';S.trim='';
   document.querySelectorAll('#models .chip').forEach(c=>c.classList.toggle('on',c===b));buildSelects();apply();});
 
 function buildSelects(){
   const base=DATA[S.tab].filter(x=>!S.model||x.m===S.model);
-  const ex={},fu={};
-  base.forEach(x=>{const k=ekey(x.e);ex[k]=ex[k]||{n:x.e,c:0};ex[k].c+=x.q;fu[x._f]=(fu[x._f]||0)+x.q;});
+  const ex={},fu={},tr={};
+  base.forEach(x=>{const k=ekey(x.e);ex[k]=ex[k]||{n:x.e,c:0};ex[k].c+=x.q;fu[x._f]=(fu[x._f]||0)+x.q;tr[x._t]=(tr[x._t]||0)+x.q;});
+  $('fTrim').innerHTML='<option value="">트림 전체</option>'+Object.entries(tr).sort((a,b)=>(a[0]==='기타')-(b[0]==='기타')||b[1]-a[1]).map(([k,v])=>`<option value="${esc(k)}" ${S.trim===k?'selected':''}>${esc(k)} (${v})</option>`).join('');
   $('fExt').innerHTML='<option value="">외장색상 전체</option>'+Object.entries(ex).sort((a,b)=>b[1].c-a[1].c)
     .map(([k,v])=>`<option value="${esc(k)}" ${S.ext===k?'selected':''}>${esc(v.n)} (${v.c})</option>`).join('');
   $('fFuel').innerHTML='<option value="">연료 전체</option>'+Object.entries(fu).sort((a,b)=>b[1]-a[1])
@@ -274,13 +280,14 @@ function buildSelects(){
 }
 $('fExt').onchange=e=>{S.ext=e.target.value;apply();};
 $('fFuel').onchange=e=>{S.fuel=e.target.value;apply();};
+$('fTrim').onchange=e=>{S.trim=e.target.value;apply();};
 $('fSort').onchange=e=>{S.sort=e.target.value;apply();};
 let tmr;$('q').addEventListener('input',e=>{clearTimeout(tmr);tmr=setTimeout(()=>{S.q=e.target.value;apply();},150);});
-$('reset').onclick=()=>{S.model='';S.q='';S.ext='';S.fuel='';S.sort='def';$('q').value='';buildModels();buildSelects();apply();};
+$('reset').onclick=()=>{S.model='';S.q='';S.ext='';S.fuel='';S.trim='';S.sort='def';$('q').value='';buildModels();buildSelects();apply();};
 
 function apply(){
   const words=S.q.toLowerCase().trim().split(/\s+/).filter(Boolean);
-  view=DATA[S.tab].filter(x=>(!S.model||x.m===S.model)&&(!S.ext||ekey(x.e)===S.ext)&&(!S.fuel||x._f===S.fuel)&&
+  view=DATA[S.tab].filter(x=>(!S.model||x.m===S.model)&&(!S.ext||ekey(x.e)===S.ext)&&(!S.fuel||x._f===S.fuel)&&(!S.trim||x._t===S.trim)&&
     words.every(w=>x._s.includes(w)||x._s.replace(/\s/g,'').includes(w)));
   const f={pa:(a,b)=>a.p-b.p,pd:(a,b)=>b.p-a.p,sd:(a,b)=>(b.s||0)-(a.s||0)||a.p-b.p,qd:(a,b)=>b.q-a.q,dd:(a,b)=>(a.d||'9').localeCompare(b.d||'9')}[S.sort];
   if(f)view.sort(f);else view.sort((a,b)=>a._i-b._i);
