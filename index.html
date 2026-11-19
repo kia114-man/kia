@@ -55,6 +55,28 @@ button,input,select{font:inherit;color:inherit}
 .chip.on em{color:#9fb0c0}
 .filters{display:flex;gap:6px;padding-bottom:10px}
 .filters select{flex:1;min-width:0;border:1.5px solid var(--line);border-radius:9px;padding:7px 8px;font-size:13px;background:#fff;color:var(--ink2)}
+.nbtn{display:flex;align-items:center;justify-content:space-between;width:100%;margin:10px 0 0;border:1.5px solid #cfe0ff;background:#eef4ff;color:#0b3a8c;border-radius:10px;padding:10px 12px;font-size:14px;font-weight:800;cursor:pointer}
+.nbtn small{font-size:12px;font-weight:600;color:#4a6aa8}
+.nwrap{position:fixed;inset:0;background:rgba(5,20,31,.55);display:none;z-index:45;align-items:flex-end;justify-content:center}
+.nwrap.show{display:flex}
+.nsheet{background:#fff;width:100%;max-width:640px;height:92vh;border-radius:18px 18px 0 0;display:flex;flex-direction:column}
+.nhead{padding:16px 16px 10px;border-bottom:1px solid var(--line)}
+.nhead .t{display:flex;justify-content:space-between;align-items:center}
+.nhead h3{font-size:17px;font-weight:800}
+.nhead .x{border:0;background:#eef2f6;border-radius:9px;padding:7px 12px;font-weight:700;cursor:pointer;color:var(--ink2)}
+.nhead p{font-size:12px;color:var(--ink3);margin-top:4px}
+.nhead input{width:100%;margin-top:10px;border:1.5px solid var(--line);border-radius:10px;padding:9px 12px;font-size:15px;background:#f8fafc;outline:none}
+.nbody{overflow-y:auto;padding:8px 16px 30px;-webkit-overflow-scrolling:touch}
+.ncommon{background:#fff8e6;border:1px solid #f3d38a;border-radius:10px;padding:10px 12px;margin:8px 0 4px;font-size:12.5px;line-height:1.6;color:#5a4300}
+.ncommon li{margin-left:16px}
+.ngrp{font-size:13px;font-weight:800;color:#fff;background:var(--navy);border-radius:8px;padding:6px 10px;margin:16px 0 6px}
+.nrow{display:flex;gap:10px;align-items:flex-start;padding:10px 2px;border-bottom:1px solid var(--line)}
+.nrow .l{flex:1;min-width:0}
+.nrow .m{font-size:15px;font-weight:800}
+.nrow .k{font-size:12.5px;color:var(--ink2);margin-top:1px}
+.nrow .n{font-size:12px;color:#b4232a;margin-top:3px;line-height:1.45}
+.nrow .d{flex:none;font-size:16px;font-weight:800;color:#0a6cff;background:#eef4ff;border-radius:8px;padding:4px 10px;white-space:nowrap}
+.ngnote{font-size:12px;color:var(--ink2);background:#f4f6f9;border-radius:8px;padding:8px 10px;margin-top:6px;line-height:1.5}
 .sum{font-size:13px;color:var(--ink2);padding:12px 2px 8px;display:flex;justify-content:space-between;align-items:center}
 .sum b{color:var(--ink);font-size:15px}
 .list{display:grid;gap:10px;padding-bottom:30px}
@@ -116,6 +138,7 @@ button,input,select{font:inherit;color:inherit}
 </header>
 <div class="bar" id="bar">
   <div class="wrap">
+    <button class="nbtn" id="nOpen">📅 차종별 납기안내 <small id="nSub">눌러서 보기 ›</small></button>
     <div class="search">
       <input id="q" type="search" placeholder="검색: 예) 하이리무진 스노우 / 노블레스 선루프" autocomplete="off">
       <button class="clr" id="reset">초기화</button>
@@ -147,6 +170,16 @@ button,input,select{font:inherit;color:inherit}
     <textarea id="msg"></textarea>
     <div class="btns"><button class="b-close" id="mClose">닫기</button><button class="b-copy" id="mCopy">복사하기</button></div>
     <p class="hint">복사 후 담당자 카톡에 붙여넣기 하시면 바로 확인해드립니다.</p>
+  </div>
+</div>
+<div class="nwrap" id="nWrap">
+  <div class="nsheet">
+    <div class="nhead">
+      <div class="t"><h3 id="nTitle">차종별 납기안내</h3><button class="x" id="nClose">닫기</button></div>
+      <p id="nBasis"></p>
+      <input id="nQ" type="search" placeholder="차종 검색: 예) 카니발, 쏘렌토" autocomplete="off">
+    </div>
+    <div class="nbody" id="nBody"></div>
   </div>
 </div>
 <div class="toast" id="toast"></div>
@@ -290,6 +323,18 @@ $('mCopy').onclick=async()=>{const t=$('msg').value;let ok=false;
   toast(ok?'복사됐습니다. 카톡에 붙여넣기 해주세요 👍':'문구를 길게 눌러 직접 복사해주세요');
   if(ok)$('modal').classList.remove('show');};
 function toast(m){const t=$('toast');t.textContent=m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),2200);}
+
+let NP=null;
+fetch('napgi.json',{cache:'no-store'}).then(r=>r.json()).then(d=>{NP=d;$('nTitle').textContent=d.title;$('nSub').textContent=d.basis+' ›';$('nBasis').textContent=d.basis+' · '+d.notice;}).catch(()=>{$('nOpen').hidden=true;});
+function nRender(){if(!NP)return;const q=$('nQ').value.trim().toLowerCase().replace(/\s/g,'');
+  let h=q?'':'<div class="ncommon"><b>공통 안내</b><ul>'+NP.common.map(c=>'<li>'+esc(c)+'</li>').join('')+'</ul></div>';
+  NP.groups.forEach(g=>{const rows=g.rows.filter(r=>!q||(r.m+r.k+g.name).toLowerCase().replace(/\s/g,'').includes(q));if(!rows.length)return;
+    h+='<div class="ngrp">'+esc(g.name)+'</div>'+rows.map(r=>`<div class="nrow"><div class="l"><div class="m">${esc(r.m)}</div><div class="k">${esc(r.k)}</div>${r.n?'<div class="n">※ '+esc(r.n)+'</div>':''}</div><div class="d">${esc(r.d)}</div></div>`).join('')+(g.note&&!q?'<div class="ngnote">'+esc(g.note)+'</div>':'');});
+  $('nBody').innerHTML=h||'<div class="empty">검색 결과가 없습니다.</div>';}
+$('nOpen').onclick=()=>{nRender();$('nWrap').classList.add('show');document.body.style.overflow='hidden';};
+function nClose(){$('nWrap').classList.remove('show');document.body.style.overflow='';}
+$('nClose').onclick=nClose;$('nWrap').addEventListener('click',e=>{if(e.target.id==='nWrap')nClose();});
+$('nQ').addEventListener('input',nRender);
 })();
 </script>
 </body>
