@@ -28,6 +28,7 @@ button,input,select{font:inherit;color:inherit}
 .wrap{max-width:860px;margin:0 auto;padding:0 14px}
 .hd{display:flex;align-items:center;justify-content:space-between;padding:12px 0 8px}
 .hd h1{font-size:17px;font-weight:800;letter-spacing:-.3px}
+.tel{display:inline-block;vertical-align:middle;margin-left:6px;font-size:12px;font-weight:700;color:#05141f;background:#fee500;border-radius:999px;padding:3px 9px;text-decoration:none;letter-spacing:0}
 .hd h1 small{display:block;font-size:11px;font-weight:500;color:#9fb0c0;margin-top:2px;letter-spacing:0}
 .upd{font-size:11px;color:#c9d6e2;text-align:right;line-height:1.4}
 .upd b{color:#fff;font-weight:700}
@@ -100,7 +101,7 @@ button,input,select{font:inherit;color:inherit}
 <header class="top" id="top">
   <div class="wrap">
     <div class="hd">
-      <h1>기아 재고조회<small>즉시출고 · 할인재고 · 선배정 한 번에</small></h1>
+      <h1>기아 재고조회 <a class="tel" href="tel:01051224141">📞 문의 010-5122-4141</a><small>즉시출고 · 할인재고 · 선배정 한 번에</small></h1>
       <div class="upd">업데이트<br><b id="upd">-</b></div>
     </div>
     <div class="tabs" id="tabs">
@@ -272,7 +273,7 @@ if('IntersectionObserver' in window){new IntersectionObserver(es=>{if(es[0].isIn
 
 $('list').addEventListener('click',e=>{const b=e.target.closest('.ask');if(!b)return;
   const x=DATA[S.tab][+b.dataset.i];
-  let t=`[백마대리점 재고문의 · ${TAB_NAME[S.tab]}]\n차종: ${x.m} ${x.t}\n옵션: ${x.o}\n색상: ${x.e} / ${x.i}\n가격: ${won(x.p)}만원`;
+  let t=`[재고문의 · ${TAB_NAME[S.tab]}]\n차종: ${x.m} ${x.t}\n옵션: ${x.o}\n색상: ${x.e} / ${x.i}\n가격: ${won(x.p)}만원`;
   if(S.tab==='sale'){if(x.s)t+=`\n할인: ${won(x.s)}만원`;if(x.d)t+=`\n생산일: ${x.d===x.d2?x.d:x.d+'~'+x.d2}`;}
   if(S.tab==='pre')t+=`\n계약번호: ${x.no} (${x.st})`;
   t+=`\n(재고기준 ${DATA.updated})\n\n고객명: \n요청사항: 출고 가능한지 확인 부탁드립니다.`;
