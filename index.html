@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>기아 실시간 재고조회</title>
+<meta name="description" content="즉시출고 · 할인재고 · 선배정 재고를 한 번에 검색하세요. 매일 오전 9시 업데이트">
+<meta property="og:type" content="website">
+<meta property="og:title" content="기아 실시간 재고조회">
+<meta property="og:description" content="즉시출고 · 할인재고 · 선배정 한 번에 · 매일 오전 9시 업데이트">
+<meta property="og:image" content="https://kia114-man.github.io/kia/og.png">
+<meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
+<meta property="og:url" content="https://kia114-man.github.io/kia/">
+<meta name="robots" content="noindex">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#0b1b2b; --ink2:#4a5866; --ink3:#8a96a3; --line:#e3e8ee; --bg:#f3f5f8; --card:#fff;
+  --navy:#05141f; --accent:#0a6cff; --green:#0f9d58; --red:#e5484d; --amber:#f5a524;
+  --now:#0f9d58; --sale:#0a6cff; --pre:#d98a00;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg);color:var(--ink);font-family:'Noto Sans KR',system-ui,sans-serif;-webkit-text-size-adjust:100%}
+button,input,select{font:inherit;color:inherit}
+.top{position:sticky;top:0;z-index:20;background:var(--navy);color:#fff;box-shadow:0 2px 10px rgba(0,0,0,.15)}
+.wrap{max-width:860px;margin:0 auto;padding:0 14px}
+.hd{display:flex;align-items:center;justify-content:space-between;padding:12px 0 8px}
+.hd h1{font-size:17px;font-weight:800;letter-spacing:-.3px}
+.hd h1 small{display:block;font-size:11px;font-weight:500;color:#9fb0c0;margin-top:2px;letter-spacing:0}
+.upd{font-size:11px;color:#c9d6e2;text-align:right;line-height:1.4}
+.upd b{color:#fff;font-weight:700}
+.tabs{display:flex;gap:6px;padding-bottom:10px}
+.tab{flex:1;border:0;border-radius:10px;padding:9px 4px;background:rgba(255,255,255,.08);color:#c9d6e2;font-size:13px;font-weight:700;cursor:pointer;line-height:1.25}
+.tab span{display:block;font-size:11px;font-weight:500;opacity:.85}
+.tab.on{background:#fff;color:var(--navy)}
+.tab.on[data-k=now]{box-shadow:inset 0 -3px 0 var(--now)}
+.tab.on[data-k=sale]{box-shadow:inset 0 -3px 0 var(--sale)}
+.tab.on[data-k=pre]{box-shadow:inset 0 -3px 0 var(--pre)}
+.bar{background:#fff;border-bottom:1px solid var(--line)}
+.search{display:flex;gap:8px;padding:10px 0 8px}
+.search input{flex:1;min-width:0;border:1.5px solid var(--line);border-radius:10px;padding:10px 12px;font-size:15px;background:#f8fafc;outline:none}
+.search input:focus{border-color:var(--accent);background:#fff}
+.clr{border:0;background:#eef2f6;border-radius:10px;padding:0 12px;font-size:13px;color:var(--ink2);cursor:pointer;white-space:nowrap}
+.chips{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;padding-bottom:8px}
+@media(min-width:560px){.chips{grid-template-columns:repeat(6,1fr)}}
+@media(min-width:760px){.chips{grid-template-columns:repeat(8,1fr)}}
+.chip{border:1.5px solid var(--line);background:#fff;border-radius:9px;padding:5px 2px;font-size:13px;font-weight:700;color:var(--ink2);cursor:pointer;white-space:nowrap;line-height:1.2;text-align:center;overflow:hidden;text-overflow:ellipsis}
+.chip em{display:block;font-style:normal;font-weight:500;color:var(--ink3);font-size:11px}
+.totop{position:fixed;right:14px;bottom:18px;z-index:30;width:46px;height:46px;border-radius:50%;border:0;background:var(--navy);color:#fff;font-size:18px;box-shadow:0 4px 14px rgba(0,0,0,.25);cursor:pointer;display:none}
+.totop.show{display:block}
+.chip.on{background:var(--navy);border-color:var(--navy);color:#fff}
+.chip.on em{color:#9fb0c0}
+.filters{display:flex;gap:6px;padding-bottom:10px}
+.filters select{flex:1;min-width:0;border:1.5px solid var(--line);border-radius:9px;padding:7px 8px;font-size:13px;background:#fff;color:var(--ink2)}
+.sum{font-size:13px;color:var(--ink2);padding:12px 2px 8px;display:flex;justify-content:space-between;align-items:center}
+.sum b{color:var(--ink);font-size:15px}
+.list{display:grid;gap:10px;padding-bottom:30px}
+@media(min-width:720px){.list{grid-template-columns:1fr 1fr}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:13px 14px 12px;display:flex;flex-direction:column;gap:8px}
+.r1{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.model{font-size:12px;font-weight:800;color:#fff;background:var(--navy);border-radius:6px;padding:2px 7px;flex:none}
+.trim{font-size:14.5px;font-weight:700;line-height:1.35;letter-spacing:-.2px;flex:1}
+.qty{flex:none;font-size:12px;font-weight:800;color:var(--now);background:#e7f6ee;border-radius:6px;padding:2px 7px}
+.opts{display:flex;flex-wrap:wrap;gap:4px}
+.opt{font-size:11.5px;background:#f1f4f8;color:var(--ink2);border-radius:5px;padding:2px 6px}
+.opt.none{color:var(--ink3)}
+.colors{display:flex;gap:12px;font-size:12.5px;color:var(--ink2);flex-wrap:wrap}
+.colors span{display:inline-flex;align-items:center;gap:5px}
+.dot{width:13px;height:13px;border-radius:50%;border:1px solid rgba(0,0,0,.18);display:inline-block;flex:none}
+.r3{display:flex;align-items:flex-end;justify-content:space-between;gap:8px;border-top:1px dashed var(--line);padding-top:9px}
+.price{font-size:17px;font-weight:800;letter-spacing:-.3px}
+.price small{font-size:12px;font-weight:500;color:var(--ink3);margin-left:2px}
+.meta{font-size:11.5px;color:var(--ink3);margin-top:2px}
+.disc{display:inline-block;font-size:12px;font-weight:800;color:var(--sale);background:#e8f1ff;border-radius:6px;padding:2px 7px;margin-right:4px}
+.st{display:inline-block;font-size:12px;font-weight:800;border-radius:6px;padding:2px 7px}
+.st.ok{color:#fff;background:var(--pre)}
+.st.wait{color:var(--ink2);background:#eef2f6}
+.ask{flex:none;border:0;background:#fee500;color:#191919;font-weight:700;font-size:13px;border-radius:9px;padding:8px 11px;cursor:pointer}
+.ask:active{transform:scale(.97)}
+.more{display:block;width:100%;border:1.5px solid var(--line);background:#fff;border-radius:12px;padding:13px;font-weight:700;color:var(--ink2);cursor:pointer;margin:4px 0 30px}
+.empty{text-align:center;color:var(--ink3);padding:50px 10px;font-size:14px;line-height:1.7}
+.toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,20px);opacity:0;background:#111;color:#fff;font-size:13.5px;padding:11px 16px;border-radius:12px;transition:.25s;z-index:50;max-width:92vw;text-align:center;line-height:1.5;pointer-events:none}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+.modal{position:fixed;inset:0;background:rgba(5,20,31,.55);display:none;align-items:flex-end;justify-content:center;z-index:40}
+.modal.show{display:flex}
+.sheet{background:#fff;width:100%;max-width:520px;border-radius:18px 18px 0 0;padding:18px 16px 20px}
+.sheet h3{font-size:15px;margin-bottom:10px}
+.sheet textarea{width:100%;height:170px;border:1.5px solid var(--line);border-radius:10px;padding:10px;font-size:13.5px;line-height:1.55;resize:none;font-family:inherit}
+.sheet .btns{display:flex;gap:8px;margin-top:10px}
+.sheet .btns button{flex:1;border:0;border-radius:10px;padding:12px;font-weight:700;cursor:pointer}
+.b-copy{background:#fee500;color:#191919}
+.b-close{background:#eef2f6;color:var(--ink2)}
+.hint{font-size:12px;color:var(--ink3);margin-top:8px;line-height:1.5}
+.loading{padding:60px 0;text-align:center;color:var(--ink3)}
+</style>
+</head>
+<body>
+<header class="top" id="top">
+  <div class="wrap">
+    <div class="hd">
+      <h1>기아 재고조회<small>즉시출고 · 할인재고 · 선배정 한 번에</small></h1>
+      <div class="upd">업데이트<br><b id="upd">-</b></div>
+    </div>
+    <div class="tabs" id="tabs">
+      <button class="tab" data-k="now">✅ 즉시출고<span id="c-now">-</span></button>
+      <button class="tab" data-k="sale">🔵 할인재고<span id="c-sale">-</span></button>
+      <button class="tab" data-k="pre">🟡 선배정<span id="c-pre">-</span></button>
+    </div>
+  </div>
+</header>
+<div class="bar" id="bar">
+  <div class="wrap">
+    <div class="search">
+      <input id="q" type="search" placeholder="검색: 예) 하이리무진 스노우 / 노블레스 선루프" autocomplete="off">
+      <button class="clr" id="reset">초기화</button>
+    </div>
+    <div class="chips" id="models"></div>
+    <div class="filters">
+      <select id="fExt"><option value="">외장색상 전체</option></select>
+      <select id="fFuel"><option value="">연료 전체</option></select>
+      <select id="fSort">
+        <option value="def">기본 순서</option>
+        <option value="pa">가격 낮은순</option>
+        <option value="pd">가격 높은순</option>
+        <option value="sd">할인 큰순</option>
+        <option value="qd">수량 많은순</option>
+        <option value="dd">생산일 오래된순</option>
+      </select>
+    </div>
+  </div>
+</div>
+<main class="wrap">
+  <div class="sum" id="sum"></div>
+  <div class="list" id="list"><div class="loading">재고를 불러오는 중…</div></div>
+  <button class="more" id="more" hidden>더 보기</button>
+</main>
+
+<div class="modal" id="modal">
+  <div class="sheet">
+    <h3>카톡 문의 문구</h3>
+    <textarea id="msg"></textarea>
+    <div class="btns"><button class="b-close" id="mClose">닫기</button><button class="b-copy" id="mCopy">복사하기</button></div>
+    <p class="hint">복사 후 담당자 카톡에 붙여넣기 하시면 바로 확인해드립니다.</p>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+<button class="totop" id="totop" aria-label="맨 위로">▲</button>
+
+<script>
+(function(){
+const TAB_NAME={now:'즉시출고',sale:'할인재고',pre:'선배정'};
+const COLOR={
+ '스노우화이트펄':'#f5f5f2','순백색':'#ffffff','오로라 블랙펄':'#121316','퓨전블랙':'#1a1b1e','인터스텔라그레이':'#55595e',
+ '세라믹실버':'#b9bcbf','아이보리실버':'#cfcbc0','스틸 그레이':'#7b8288','판테라메탈':'#4b4f52','탠 베이지':'#c9b48f',
+ '울프그레이':'#6d7072','페블그레이':'#9a9c99','시티스케이프 그린':'#4f5d50','셰일그레이':'#8b8d8d','진감청':'#1d2a4a',
+ '아이보리매트실버':'#c8c5bb','모닝 헤이즈':'#b9c1c8','헤리티지 블루':'#2f4b6e','그래비티그레이':'#3f4346','볼캐닉샌드브라운':'#7a6250',
+ '아이스버그그린':'#b9d0c6','어벤쳐린그린':'#2f5a4a','쉐도우매트그레이':'#55585a','프로스트블루':'#a9c2d6','퓨어 베이지':'#d8ccb4',
+ '선셋베이지':'#c9a986','오션블루':'#2a5b8c','딥크로마블루':'#1e3460','요트 매트 블루':'#2e4664','요트매트블루':'#2e4664','요트블루':'#2e4664',
+ '글래시어':'#e8eef0','런웨이 레드':'#a3182a','마그레드':'#a3182a','마그마 레드':'#a3182a','그래비티블루':'#2c3e56','문스케이프매트':'#8a8d8f',
+ '블랙':'#1b1b1b','그레이':'#8d8f92','브라운':'#6b4a35','베이지':'#d6c6a8','코튼베이지':'#d9cbb0','네이비':'#1f2b44','차콜':'#3a3b3d',
+ '라운지브라운':'#6a4835','미디움그레이':'#7c7f82','미디움 그레이':'#7c7f82','토피 브라운':'#7a5236','올리브브라운':'#5c5038','마롱브라운':'#5a3426',
+ '스모키블랙':'#222','휴먼그레이':'#8a8a88','어반그레이':'#7c7f82','마션브라운':'#6a3a28','미스티그레이':'#a9adb0'
+};
+function colorOf(n){n=(n||'').trim();if(COLOR[n])return COLOR[n];
+  for(const k in COLOR){if(n.replace(/\s/g,'').includes(k.replace(/\s/g,'')))return COLOR[k];}
+  if(/화이트|백/.test(n))return '#f4f4f2';if(/블랙/.test(n))return '#1b1b1b';if(/그레이/.test(n))return '#888';
+  if(/브라운/.test(n))return '#6b4a35';if(/베이지/.test(n))return '#d6c6a8';if(/블루|청/.test(n))return '#2c4a72';if(/그린/.test(n))return '#4b6a55';if(/레드/.test(n))return '#a3182a';
+  return '#c7ccd1';}
+const ekey=s=>(s||'').replace(/\s/g,'');
+function fuel(t){if(/EV 전기차|전기/.test(t))return '전기';if(/HEV|하이브리드/.test(t))return '하이브리드';if(/LPi|LPG/.test(t))return 'LPG';
+  if(/디젤/.test(t))return '디젤';if(/가솔린/.test(t))return '가솔린';return '기타';}
+const won=n=>(n/10000).toLocaleString('ko-KR',{maximumFractionDigits:0});
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+let DATA=null, view=[], shown=0;
+const S={tab:'now',model:'',q:'',ext:'',fuel:'',sort:'def'};
+try{const s=JSON.parse(localStorage.getItem('bm_stock')||'{}');if(s.tab)S.tab=s.tab;}catch(e){}
+const h=location.hash.slice(1);if(TAB_NAME[h])S.tab=h;
+function save(){try{localStorage.setItem('bm_stock',JSON.stringify({tab:S.tab}));}catch(e){}}
+
+const $=id=>document.getElementById(id);
+function setTopH(){document.documentElement.style.setProperty('--toph',$('top').offsetHeight+'px');}
+addEventListener('resize',setTopH);setTopH();
+
+fetch('data.json',{cache:'no-store'}).then(r=>r.json()).then(d=>{
+  DATA=d;
+  for(const k of ['now','sale','pre']){
+    d[k].forEach((x,i)=>{x._i=i;x._f=fuel(x.t);x._s=(x.m+' '+x.t+' '+x.o+' '+x.e+' '+x.i+' '+(x.c||'')+' '+(x.no||'')+' '+(x.st||'')).toLowerCase().replace(/\s+/g,' ');});
+    $('c-'+k).textContent=d[k].reduce((a,x)=>a+x.q,0).toLocaleString()+'대';
+  }
+  $('upd').textContent=d.updated;
+  selectTab(S.tab,true);
+}).catch(()=>{$('list').innerHTML='<div class="empty">재고 데이터를 불러오지 못했습니다.<br>잠시 후 새로고침 해주세요.</div>';});
+
+function selectTab(k,keep){
+  S.tab=k; if(!keep){S.model='';S.ext='';S.fuel='';}
+  document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('on',b.dataset.k===k));
+  if(location.hash.slice(1)!==k){try{history.replaceState(null,'','#'+k);}catch(e){location.hash=k;}}
+  save(); buildModels(); buildSelects(); apply();
+}
+$('tabs').addEventListener('click',e=>{const b=e.target.closest('.tab');if(b)selectTab(b.dataset.k);});
+addEventListener('hashchange',()=>{const k=location.hash.slice(1);if(TAB_NAME[k]&&k!==S.tab)selectTab(k);});
+
+function buildModels(){
+  const cnt={},order=[];
+  DATA[S.tab].forEach(x=>{if(!(x.m in cnt)){cnt[x.m]=0;order.push(x.m);}cnt[x.m]+=x.q;});
+  const tot=Object.values(cnt).reduce((a,b)=>a+b,0);
+  $('models').innerHTML=`<button class="chip ${S.model?'':'on'}" data-m="">전체<em>${tot}</em></button>`+
+    order.map(m=>`<button class="chip ${S.model===m?'on':''}" data-m="${esc(m)}">${esc(m)}<em>${cnt[m]}</em></button>`).join('');
+}
+$('models').addEventListener('click',e=>{const b=e.target.closest('.chip');if(!b)return;S.model=b.dataset.m;S.ext='';
+  document.querySelectorAll('#models .chip').forEach(c=>c.classList.toggle('on',c===b));buildSelects();apply();});
+
+function buildSelects(){
+  const base=DATA[S.tab].filter(x=>!S.model||x.m===S.model);
+  const ex={},fu={};
+  base.forEach(x=>{const k=ekey(x.e);ex[k]=ex[k]||{n:x.e,c:0};ex[k].c+=x.q;fu[x._f]=(fu[x._f]||0)+x.q;});
+  $('fExt').innerHTML='<option value="">외장색상 전체</option>'+Object.entries(ex).sort((a,b)=>b[1].c-a[1].c)
+    .map(([k,v])=>`<option value="${esc(k)}" ${S.ext===k?'selected':''}>${esc(v.n)} (${v.c})</option>`).join('');
+  $('fFuel').innerHTML='<option value="">연료 전체</option>'+Object.entries(fu).sort((a,b)=>b[1]-a[1])
+    .map(([k,v])=>`<option ${S.fuel===k?'selected':''}>${k}</option>`).join('');
+  const so=$('fSort');
+  so.querySelector('[value=sd]').hidden=S.tab!=='sale';so.querySelector('[value=dd]').hidden=S.tab!=='sale';
+  if(S.tab!=='sale'&&(S.sort==='sd'||S.sort==='dd'))S.sort='def';so.value=S.sort;
+}
+$('fExt').onchange=e=>{S.ext=e.target.value;apply();};
+$('fFuel').onchange=e=>{S.fuel=e.target.value;apply();};
+$('fSort').onchange=e=>{S.sort=e.target.value;apply();};
+let tmr;$('q').addEventListener('input',e=>{clearTimeout(tmr);tmr=setTimeout(()=>{S.q=e.target.value;apply();},150);});
+$('reset').onclick=()=>{S.model='';S.q='';S.ext='';S.fuel='';S.sort='def';$('q').value='';buildModels();buildSelects();apply();};
+
+function apply(){
+  const words=S.q.toLowerCase().trim().split(/\s+/).filter(Boolean);
+  view=DATA[S.tab].filter(x=>(!S.model||x.m===S.model)&&(!S.ext||ekey(x.e)===S.ext)&&(!S.fuel||x._f===S.fuel)&&
+    words.every(w=>x._s.includes(w)||x._s.replace(/\s/g,'').includes(w)));
+  const f={pa:(a,b)=>a.p-b.p,pd:(a,b)=>b.p-a.p,sd:(a,b)=>(b.s||0)-(a.s||0)||a.p-b.p,qd:(a,b)=>b.q-a.q,dd:(a,b)=>(a.d||'9').localeCompare(b.d||'9')}[S.sort];
+  if(f)view.sort(f);else view.sort((a,b)=>a._i-b._i);
+  const n=view.reduce((a,x)=>a+x.q,0);
+  $('sum').innerHTML=`<span>${TAB_NAME[S.tab]}${S.model?' · '+esc(S.model):''}</span><span><b>${n.toLocaleString()}</b>대 · ${view.length.toLocaleString()}개 사양</span>`;
+  shown=0;$('list').innerHTML='';more();
+}
+function card(x){
+  const opts=x.o==='무옵션'?'<span class="opt none">무옵션</span>':x.o.split(/[,&+]/).map(s=>s.trim()).filter(Boolean).map(o=>`<span class="opt">${esc(o)}</span>`).join('');
+  let badge='',meta='';
+  if(S.tab==='sale'){
+    if(x.s)badge+=`<span class="disc">할인 ${won(x.s)}만원</span>`;
+    if(x.d)meta=`생산일 ${x.d===x.d2?x.d:x.d+' ~ '+x.d2}`;
+  }
+  if(S.tab==='pre'){badge=`<span class="st ${x.st==='선점가능'?'ok':'wait'}">${esc(x.st)}</span>`;meta=`${esc(x.no)} · ${esc(x.c)}`;}
+  const qty=x.q>1?`<span class="qty">${x.q}대</span>`:'';
+  return `<article class="card">
+    <div class="r1"><span class="model">${esc(x.m)}</span><div class="trim">${esc(x.t)}</div>${qty}</div>
+    <div class="opts">${opts}</div>
+    <div class="colors"><span><i class="dot" style="background:${colorOf(x.e)}"></i>외장 ${esc(x.e)}</span><span><i class="dot" style="background:${colorOf(x.i)}"></i>내장 ${esc(x.i)}</span></div>
+    <div class="r3"><div>${badge?'<div style="margin-bottom:4px">'+badge+'</div>':''}<div class="price">${won(x.p)}<small>만원</small></div>${meta?'<div class="meta">'+meta+'</div>':''}</div>
+    <button class="ask" data-i="${x._i}">💬 문의</button></div>
+  </article>`;
+}
+function more(){
+  const next=view.slice(shown,shown+40);shown+=next.length;
+  if(!view.length){$('list').innerHTML='<div class="empty">조건에 맞는 재고가 없습니다.<br>검색어나 필터를 바꿔보세요.</div>';}
+  else $('list').insertAdjacentHTML('beforeend',next.map(card).join(''));
+  $('more').hidden=shown>=view.length;$('more').textContent=`더 보기 (${(view.length-shown).toLocaleString()}개 남음)`;
+}
+$('more').onclick=more;
+addEventListener('scroll',()=>$('totop').classList.toggle('show',scrollY>500),{passive:true});
+$('totop').onclick=()=>scrollTo({top:0,behavior:'smooth'});
+$('models').addEventListener('click',()=>{const y=$('sum').getBoundingClientRect().top+scrollY-$('top').offsetHeight-4;if(scrollY>y)scrollTo({top:y});});
+if('IntersectionObserver' in window){new IntersectionObserver(es=>{if(es[0].isIntersecting&&!$('more').hidden)more();},{rootMargin:'400px'}).observe($('more'));}
+
+$('list').addEventListener('click',e=>{const b=e.target.closest('.ask');if(!b)return;
+  const x=DATA[S.tab][+b.dataset.i];
+  let t=`[백마대리점 재고문의 · ${TAB_NAME[S.tab]}]\n차종: ${x.m} ${x.t}\n옵션: ${x.o}\n색상: ${x.e} / ${x.i}\n가격: ${won(x.p)}만원`;
+  if(S.tab==='sale'){if(x.s)t+=`\n할인: ${won(x.s)}만원`;if(x.d)t+=`\n생산일: ${x.d===x.d2?x.d:x.d+'~'+x.d2}`;}
+  if(S.tab==='pre')t+=`\n계약번호: ${x.no} (${x.st})`;
+  t+=`\n(재고기준 ${DATA.updated})\n\n고객명: \n요청사항: 출고 가능한지 확인 부탁드립니다.`;
+  $('msg').value=t;$('modal').classList.add('show');});
+$('mClose').onclick=()=>$('modal').classList.remove('show');
+$('modal').addEventListener('click',e=>{if(e.target.id==='modal')$('modal').classList.remove('show');});
+$('mCopy').onclick=async()=>{const t=$('msg').value;let ok=false;
+  try{await navigator.clipboard.writeText(t);ok=true;}catch(e){}
+  if(!ok){try{$('msg').select();ok=document.execCommand('copy');}catch(e){}}
+  toast(ok?'복사됐습니다. 카톡에 붙여넣기 해주세요 👍':'문구를 길게 눌러 직접 복사해주세요');
+  if(ok)$('modal').classList.remove('show');};
+function toast(m){const t=$('toast');t.textContent=m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),2200);}
+})();
+</script>
+</body>
+</html>
