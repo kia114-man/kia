@@ -151,7 +151,7 @@ button,input,select{font:inherit;color:inherit}
 .loading{padding:60px 0;text-align:center;color:var(--ink3)}
 </style>
 <script>
-(function(){const APP_VER='20261120e';
+(function(){const APP_VER='20261120f';
 fetch('version.json?t='+Date.now(),{cache:'no-store'}).then(r=>r.json()).then(j=>{
   if(j.v&&j.v!==APP_VER){const u=new URL(location.href);if(u.searchParams.get('v')!==j.v){u.searchParams.set('v',j.v);location.replace(u.toString());}}
 }).catch(()=>{});})();
@@ -323,7 +323,8 @@ function apply(){
   const f={pa:(a,b)=>a.p-b.p,pd:(a,b)=>b.p-a.p,sd:(a,b)=>(b.s||0)-(a.s||0)||a.p-b.p,qd:(a,b)=>b.q-a.q,dd:(a,b)=>(a.d||'9').localeCompare(b.d||'9')}[S.sort];
   if(f)view.sort(f);else view.sort((a,b)=>S.tab==='all'?a._a-b._a:a._i-b._i);
   const n=view.reduce((a,x)=>a+x.q,0);
-  $('sum').innerHTML=`<span>${TAB_NAME[S.tab]}${S.model?' · '+esc(S.model):''}</span><span><b>${n.toLocaleString()}</b>대 · ${view.length.toLocaleString()}개 사양</span>`;
+  const lk=words.map(w=>LIST_SYN[w]).find(Boolean);
+  $('sum').innerHTML=`<span>${lk?TAB_NAME[lk]:TAB_NAME[S.tab]}${S.model?' · '+esc(S.model):''}</span><span><b>${n.toLocaleString()}</b>대 · ${view.length.toLocaleString()}개 사양</span>`;
   shown=0;$('list').innerHTML='';more();
 }
 function card(x){
@@ -336,7 +337,7 @@ function card(x){
   if(x._k==='pre'){badge=`<span class="st ${x.st==='선점가능'?'ok':'wait'}">${esc(x.st)}</span>`;meta=`계약번호 ${esc(x.no)}`;}
   const qty=x.q>1?`<span class="qty">${x.q}대</span>`:'';
   return `<article class="card">
-    <div class="r1">${S.tab==='all'?`<span class="src ${x._k}">${TAB_NAME[x._k]}</span>`:''}<span class="model">${esc(x.m)}</span><div class="trim">${esc(x.t)}</div>${qty}</div>
+    <div class="r1">${(S.tab==='all'||x._k!==S.tab)?`<span class="src ${x._k}">${TAB_NAME[x._k]}</span>`:''}<span class="model">${esc(x.m)}</span><div class="trim">${esc(x.t)}</div>${qty}</div>
     ${x._k==='pre'&&x.c?`<div class="cust"><span>계약자</span><b>${esc(x.c)}</b></div>`:''}
     <div class="opts"><span class="ol">옵션</span>${opts}</div>
     <div class="colors"><span><i class="dot" style="background:${colorOf(x.e)}"></i>외장 ${esc(x.e)}</span><span><i class="dot" style="background:${colorOf(x.i)}"></i>내장 ${esc(x.i)}</span></div>
