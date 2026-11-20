@@ -150,6 +150,12 @@ button,input,select{font:inherit;color:inherit}
 .hint{font-size:12px;color:var(--ink3);margin-top:8px;line-height:1.5}
 .loading{padding:60px 0;text-align:center;color:var(--ink3)}
 </style>
+<script>
+(function(){const APP_VER='20261120b';
+fetch('version.json?t='+Date.now(),{cache:'no-store'}).then(r=>r.json()).then(j=>{
+  if(j.v&&j.v!==APP_VER){const u=new URL(location.href);if(u.searchParams.get('v')!==j.v){u.searchParams.set('v',j.v);location.replace(u.toString());}}
+}).catch(()=>{});})();
+</script>
 </head>
 <body>
 <header class="top" id="top">
