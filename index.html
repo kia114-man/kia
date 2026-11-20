@@ -39,6 +39,10 @@ button,input,select{font:inherit;color:inherit}
 .tab.on[data-k=now]{box-shadow:inset 0 -3px 0 var(--now)}
 .tab.on[data-k=sale]{box-shadow:inset 0 -3px 0 var(--sale)}
 .tab.on[data-k=pre]{box-shadow:inset 0 -3px 0 var(--pre)}
+.tab.on[data-k=all]{box-shadow:inset 0 -3px 0 #8b5cf6}
+@media(max-width:420px){.tabs{gap:4px}.tab{font-size:12.5px;padding:8px 2px;letter-spacing:-.4px}}
+.src{flex:none;font-size:11px;font-weight:800;border-radius:6px;padding:2px 6px;color:#fff}
+.src.now{background:var(--now)}.src.sale{background:var(--sale)}.src.pre{background:var(--pre)}
 .bar{background:#fff;border-bottom:1px solid var(--line)}
 .search{display:flex;gap:8px;padding:10px 0 8px}
 .search input{flex:1;min-width:0;border:1.5px solid var(--line);border-radius:10px;padding:10px 12px;font-size:15px;background:#f8fafc;outline:none}
@@ -158,6 +162,7 @@ button,input,select{font:inherit;color:inherit}
       <button class="tab" data-k="now">✅ 즉시출고<span id="c-now">-</span></button>
       <button class="tab" data-k="sale">🔵 할인재고<span id="c-sale">-</span></button>
       <button class="tab" data-k="pre">🟡 선배정<span id="c-pre">-</span></button>
+      <button class="tab" data-k="all">🔍 전체<span id="c-all">-</span></button>
     </div>
   </div>
 </header>
@@ -216,7 +221,7 @@ button,input,select{font:inherit;color:inherit}
 
 <script>
 (function(){
-const TAB_NAME={now:'즉시출고',sale:'할인재고',pre:'선배정'};
+const TAB_NAME={now:'즉시출고',sale:'할인재고',pre:'선배정',all:'전체'};
 const COLOR={
  '스노우화이트펄':'#f5f5f2','순백색':'#ffffff','오로라 블랙펄':'#121316','퓨전블랙':'#1a1b1e','인터스텔라그레이':'#55595e',
  '세라믹실버':'#b9bcbf','아이보리실버':'#cfcbc0','스틸 그레이':'#7b8288','판테라메탈':'#4b4f52','탠 베이지':'#c9b48f',
@@ -257,9 +262,11 @@ addEventListener('resize',setTopH);setTopH();
 fetch('data.json',{cache:'no-store'}).then(r=>r.json()).then(d=>{
   DATA=d;
   for(const k of ['now','sale','pre']){
-    d[k].forEach((x,i)=>{x._i=i;x._f=fuel(x.t,x.m);x._t=trimOf(x.t);x._s=(x.m+' '+x.t+' '+x.o+' '+x.e+' '+x.i+' '+(x.c||'')+' '+(x.no||'')+' '+(x.st||'')).toLowerCase().replace(/\s+/g,' ');});
+    d[k].forEach((x,i)=>{x._k=k;x._i=i;x._f=fuel(x.t,x.m);x._t=trimOf(x.t);x._s=(x.m+' '+x.t+' '+x.o+' '+x.e+' '+x.i+' '+(x.c||'')+' '+(x.no||'')+' '+(x.st||'')).toLowerCase().replace(/\s+/g,' ');});
     $('c-'+k).textContent=d[k].reduce((a,x)=>a+x.q,0).toLocaleString()+'대';
   }
+  d.all=[...d.now,...d.sale,...d.pre];d.all.forEach((x,i)=>{x._g=i;x._a=i;});
+  $('c-all').textContent=d.all.reduce((a,x)=>a+x.q,0).toLocaleString()+'대';
   $('upd').textContent=d.updated;
   selectTab(S.tab,true);
 }).catch(()=>{$('list').innerHTML='<div class="empty">재고 데이터를 불러오지 못했습니다.<br>잠시 후 새로고침 해주세요.</div>';});
@@ -293,8 +300,8 @@ function buildSelects(){
   $('fFuel').innerHTML='<option value="">연료 전체</option>'+Object.entries(fu).sort((a,b)=>b[1]-a[1])
     .map(([k,v])=>`<option ${S.fuel===k?'selected':''}>${k}</option>`).join('');
   const so=$('fSort');
-  so.querySelector('[value=sd]').hidden=S.tab!=='sale';so.querySelector('[value=dd]').hidden=S.tab!=='sale';
-  if(S.tab!=='sale'&&(S.sort==='sd'||S.sort==='dd'))S.sort='def';so.value=S.sort;
+  const hasSale=S.tab==='sale'||S.tab==='all';so.querySelector('[value=sd]').hidden=!hasSale;so.querySelector('[value=dd]').hidden=!hasSale;
+  if(!hasSale&&(S.sort==='sd'||S.sort==='dd'))S.sort='def';so.value=S.sort;
 }
 $('fExt').onchange=e=>{S.ext=e.target.value;apply();};
 $('fFuel').onchange=e=>{S.fuel=e.target.value;apply();};
@@ -308,7 +315,7 @@ function apply(){
   view=DATA[S.tab].filter(x=>(!S.model||x.m===S.model)&&(!S.ext||ekey(x.e)===S.ext)&&(!S.fuel||x._f===S.fuel)&&(!S.trim||x._t===S.trim)&&
     words.every(w=>x._s.includes(w)||x._s.replace(/\s/g,'').includes(w)));
   const f={pa:(a,b)=>a.p-b.p,pd:(a,b)=>b.p-a.p,sd:(a,b)=>(b.s||0)-(a.s||0)||a.p-b.p,qd:(a,b)=>b.q-a.q,dd:(a,b)=>(a.d||'9').localeCompare(b.d||'9')}[S.sort];
-  if(f)view.sort(f);else view.sort((a,b)=>a._i-b._i);
+  if(f)view.sort(f);else view.sort((a,b)=>S.tab==='all'?a._a-b._a:a._i-b._i);
   const n=view.reduce((a,x)=>a+x.q,0);
   $('sum').innerHTML=`<span>${TAB_NAME[S.tab]}${S.model?' · '+esc(S.model):''}</span><span><b>${n.toLocaleString()}</b>대 · ${view.length.toLocaleString()}개 사양</span>`;
   shown=0;$('list').innerHTML='';more();
@@ -316,19 +323,19 @@ function apply(){
 function card(x){
   const opts=x.o==='무옵션'?'<span class="opt none">무옵션</span>':x.o.split(/[,&+]/).map(s=>s.trim()).filter(Boolean).map(o=>`<span class="opt">${esc(o)}</span>`).join('');
   let badge='',meta='';
-  if(S.tab==='sale'){
+  if(x._k==='sale'){
     if(x.s)badge+=`<span class="disc">할인 ${won(x.s)}만원</span>`;
     if(x.d)meta=`생산일 ${x.d===x.d2?x.d:x.d+' ~ '+x.d2}`;
   }
-  if(S.tab==='pre'){badge=`<span class="st ${x.st==='선점가능'?'ok':'wait'}">${esc(x.st)}</span>`;meta=`계약번호 ${esc(x.no)}`;}
+  if(x._k==='pre'){badge=`<span class="st ${x.st==='선점가능'?'ok':'wait'}">${esc(x.st)}</span>`;meta=`계약번호 ${esc(x.no)}`;}
   const qty=x.q>1?`<span class="qty">${x.q}대</span>`:'';
   return `<article class="card">
-    <div class="r1"><span class="model">${esc(x.m)}</span><div class="trim">${esc(x.t)}</div>${qty}</div>
-    ${S.tab==='pre'&&x.c?`<div class="cust"><span>계약자</span><b>${esc(x.c)}</b></div>`:''}
+    <div class="r1">${S.tab==='all'?`<span class="src ${x._k}">${TAB_NAME[x._k]}</span>`:''}<span class="model">${esc(x.m)}</span><div class="trim">${esc(x.t)}</div>${qty}</div>
+    ${x._k==='pre'&&x.c?`<div class="cust"><span>계약자</span><b>${esc(x.c)}</b></div>`:''}
     <div class="opts"><span class="ol">옵션</span>${opts}</div>
     <div class="colors"><span><i class="dot" style="background:${colorOf(x.e)}"></i>외장 ${esc(x.e)}</span><span><i class="dot" style="background:${colorOf(x.i)}"></i>내장 ${esc(x.i)}</span></div>
     <div class="r3"><div>${badge?'<div style="margin-bottom:4px">'+badge+'</div>':''}<div class="price">${won(x.p)}<small>만원</small></div>${meta?'<div class="meta">'+meta+'</div>':''}</div>
-    <button class="ask" data-i="${x._i}">💬 문의</button></div>
+    <button class="ask" data-g="${x._g}">💬 문의</button></div>
   </article>`;
 }
 function more(){
@@ -344,10 +351,10 @@ $('models').addEventListener('click',()=>{const y=$('sum').getBoundingClientRect
 if('IntersectionObserver' in window){new IntersectionObserver(es=>{if(es[0].isIntersecting&&!$('more').hidden)more();},{rootMargin:'400px'}).observe($('more'));}
 
 $('list').addEventListener('click',e=>{const b=e.target.closest('.ask');if(!b)return;
-  const x=DATA[S.tab][+b.dataset.i];
-  let t=`[재고문의 · ${TAB_NAME[S.tab]}]\n차종: ${x.m} ${x.t}\n옵션: ${x.o}\n색상: ${x.e} / ${x.i}\n가격: ${won(x.p)}만원`;
-  if(S.tab==='sale'){if(x.s)t+=`\n할인: ${won(x.s)}만원`;if(x.d)t+=`\n생산일: ${x.d===x.d2?x.d:x.d+'~'+x.d2}`;}
-  if(S.tab==='pre')t+=`\n계약자: ${x.c}\n계약번호: ${x.no} (${x.st})`;
+  const x=DATA.all[+b.dataset.g];
+  let t=`[재고문의 · ${TAB_NAME[x._k]}]\n차종: ${x.m} ${x.t}\n옵션: ${x.o}\n색상: ${x.e} / ${x.i}\n가격: ${won(x.p)}만원`;
+  if(x._k==='sale'){if(x.s)t+=`\n할인: ${won(x.s)}만원`;if(x.d)t+=`\n생산일: ${x.d===x.d2?x.d:x.d+'~'+x.d2}`;}
+  if(x._k==='pre')t+=`\n계약자: ${x.c}\n계약번호: ${x.no} (${x.st})`;
   t+=`\n(재고기준 ${DATA.updated})\n\n고객명: \n요청사항: 출고 가능한지 확인 부탁드립니다.`;
   $('msg').value=t;$('modal').classList.add('show');});
 $('mClose').onclick=()=>$('modal').classList.remove('show');
