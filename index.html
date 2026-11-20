@@ -151,7 +151,7 @@ button,input,select{font:inherit;color:inherit}
 .loading{padding:60px 0;text-align:center;color:var(--ink3)}
 </style>
 <script>
-(function(){const APP_VER='20261120b';
+(function(){const APP_VER='20261120c';
 fetch('version.json?t='+Date.now(),{cache:'no-store'}).then(r=>r.json()).then(j=>{
   if(j.v&&j.v!==APP_VER){const u=new URL(location.href);if(u.searchParams.get('v')!==j.v){u.searchParams.set('v',j.v);location.replace(u.toString());}}
 }).catch(()=>{});})();
@@ -255,7 +255,7 @@ function fuel(t,m){if(EV_MODELS.has(m)||/EV 전기차|전기/.test(t))return '�
 const won=n=>(n/10000).toLocaleString('ko-KR',{maximumFractionDigits:0});
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
-let DATA=null, view=[], shown=0;
+const MODELS=new Set();let DATA=null, view=[], shown=0;
 const S={tab:'now',model:'',q:'',ext:'',fuel:'',trim:'',sort:'def'};
 try{const s=JSON.parse(localStorage.getItem('bm_stock')||'{}');if(s.tab)S.tab=s.tab;}catch(e){}
 const h=location.hash.slice(1);if(TAB_NAME[h])S.tab=h;
@@ -271,7 +271,7 @@ fetch('data.json',{cache:'no-store'}).then(r=>r.json()).then(d=>{
     d[k].forEach((x,i)=>{x._k=k;x._i=i;x._f=fuel(x.t,x.m);x._t=trimOf(x.t);x._s=(x.m+' '+x.t+' '+x.o+' '+x.e+' '+x.i+' '+(x.c||'')+' '+(x.no||'')+' '+(x.st||'')).toLowerCase().replace(/\s+/g,' ');});
     $('c-'+k).textContent=d[k].reduce((a,x)=>a+x.q,0).toLocaleString()+'대';
   }
-  d.all=[...d.now,...d.sale,...d.pre];d.all.forEach((x,i)=>{x._g=i;x._a=i;});
+  d.all=[...d.now,...d.sale,...d.pre];d.all.forEach(x=>{x._ml=x.m.toLowerCase();MODELS.add(x._ml);});d.all.forEach((x,i)=>{x._g=i;x._a=i;});
   $('c-all').textContent=d.all.reduce((a,x)=>a+x.q,0).toLocaleString()+'대';
   $('upd').textContent=d.updated;
   selectTab(S.tab,true);
@@ -319,7 +319,7 @@ $('reset').onclick=()=>{S.model='';S.q='';S.ext='';S.fuel='';S.trim='';S.sort='d
 function apply(){
   const words=S.q.toLowerCase().trim().split(/\s+/).filter(Boolean);
   view=DATA[S.tab].filter(x=>(!S.model||x.m===S.model)&&(!S.ext||ekey(x.e)===S.ext)&&(!S.fuel||x._f===S.fuel)&&(!S.trim||x._t===S.trim)&&
-    words.every(w=>x._s.includes(w)||x._s.replace(/\s/g,'').includes(w)));
+    words.every(w=>MODELS.has(w)?x._ml===w:(x._s.includes(w)||x._s.replace(/\s/g,'').includes(w))));
   const f={pa:(a,b)=>a.p-b.p,pd:(a,b)=>b.p-a.p,sd:(a,b)=>(b.s||0)-(a.s||0)||a.p-b.p,qd:(a,b)=>b.q-a.q,dd:(a,b)=>(a.d||'9').localeCompare(b.d||'9')}[S.sort];
   if(f)view.sort(f);else view.sort((a,b)=>S.tab==='all'?a._a-b._a:a._i-b._i);
   const n=view.reduce((a,x)=>a+x.q,0);
